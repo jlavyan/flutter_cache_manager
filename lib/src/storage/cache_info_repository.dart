@@ -9,7 +9,7 @@ abstract class CacheInfoRepository {
 
   Future<CacheObject> insert(CacheObject cacheObject);
 
-  Future<CacheObject> get(String url);
+  Future<CacheObject> get(String key);
 
   Future<int> delete(int id);
 

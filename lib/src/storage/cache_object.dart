@@ -12,9 +12,10 @@ class CacheObject {
   static const columnETag = 'eTag';
   static const columnValidTill = 'validTill';
   static const columnTouched = 'touched';
+  static const columnKey = 'key';
 
-  CacheObject(this.url,
-      {this.relativePath, this.validTill, this.eTag, this.id});
+  CacheObject(this.key,
+      {this.relativePath, this.validTill, this.eTag, this.id, this.url});
 
   CacheObject.fromMap(Map<String, dynamic> map)
       : id = map[columnId] as int,
@@ -22,13 +23,15 @@ class CacheObject {
         relativePath = map[columnPath] as String,
         validTill =
             DateTime.fromMillisecondsSinceEpoch(map[columnValidTill] as int),
-        eTag = map[columnETag] as String;
+        eTag = map[columnETag] as String,
+        key = map[columnKey] as String;
 
   int id;
   String url;
   String relativePath;
   DateTime validTill;
   String eTag;
+  String key;
 
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{
@@ -36,7 +39,8 @@ class CacheObject {
       columnPath: relativePath,
       columnETag: eTag,
       columnValidTill: validTill?.millisecondsSinceEpoch ?? 0,
-      columnTouched: clock.now().millisecondsSinceEpoch
+      columnTouched: clock.now().millisecondsSinceEpoch,
+      columnKey: key
     };
     if (id != null) {
       map[columnId] = id;

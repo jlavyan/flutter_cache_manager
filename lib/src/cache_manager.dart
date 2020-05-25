@@ -105,9 +105,12 @@ abstract class BaseCacheManager {
   /// Downloaded form [url], [headers] can be used for example for authentication.
   /// When a file is cached it is return directly, when it is too old the file is
   /// downloaded in the background. When a cached file is not available the
-  /// newly downloaded file is returned.
-  Future<File> getSingleFile(String url, {Map<String, String> headers}) async {
-    final cacheFile = await getFileFromCache(url);
+  /// newly downloaded file is returned. Cache key is `key` if it's not provided
+  /// `key` will be `url`
+  Future<File> getSingleFile(String url,
+      {Map<String, String> headers, String key}) async {
+    key ??= url;
+    final cacheFile = await getFileFromCache(key);
     if (cacheFile != null) {
       if (cacheFile.validTill.isBefore(DateTime.now())) {
         unawaited(downloadFile(url, authHeaders: headers));
@@ -120,7 +123,7 @@ abstract class BaseCacheManager {
   /// Get the file from the cache and/or online, depending on availability and age.
   /// Downloaded form [url], [headers] can be used for example for authentication.
   /// The files are returned as stream. First the cached file if available, when the
-  /// cached file is too old the newly downloaded file is returned afterwards.
+  /// cached file is too old the newly downloaded file is returned afterwards
   @Deprecated('Prefer to use the new getFileStream method')
   Stream<FileInfo> getFile(String url, {Map<String, String> headers}) {
     return getFileStream(url, withProgress: false).map((r) => r as FileInfo);
@@ -130,6 +133,8 @@ abstract class BaseCacheManager {
   /// Downloaded form [url], [headers] can be used for example for authentication.
   /// The files are returned as stream. First the cached file if available, when the
   /// cached file is too old the newly downloaded file is returned afterwards.
+  /// Cache key is `key` if it's not provided `key` will be `url`
+
   ///
   /// The [FileResponse] is either a [FileInfo] object for fully downloaded files
   /// or a [DownloadProgress] object for when a file is being downloaded.
@@ -138,14 +143,16 @@ abstract class BaseCacheManager {
   /// returned from the cache there will be no progress given, although the file
   /// might be outdated and a new file is being downloaded in the background.
   Stream<FileResponse> getFileStream(String url,
-      {Map<String, String> headers, bool withProgress}) {
+      {Map<String, String> headers, bool withProgress, String key}) {
     final streamController = StreamController<FileResponse>();
-    _pushFileToStream(streamController, url, headers, withProgress ?? false);
+    key ??= url;
+    _pushFileToStream(
+        streamController, url, headers, withProgress ?? false, key);
     return streamController.stream;
   }
 
   Future<void> _pushFileToStream(StreamController streamController, String url,
-      Map<String, String> headers, bool withProgress) async {
+      Map<String, String> headers, bool withProgress, String key) async {
     FileInfo cacheFile;
     try {
       cacheFile = await getFileFromCache(url);
@@ -160,7 +167,7 @@ abstract class BaseCacheManager {
     if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
       try {
         await for (var response
-            in _webHelper.downloadFile(url, authHeaders: headers)) {
+            in _webHelper.downloadFile(url, authHeaders: headers, key: key)) {
           if (response is DownloadProgress && withProgress) {
             streamController.add(response);
           }
@@ -192,7 +199,7 @@ abstract class BaseCacheManager {
   }
 
   ///Get the file from the cache
-  Future<FileInfo> getFileFromCache(String url) => _store.getFile(url);
+  Future<FileInfo> getFileFromCache(String key) => _store.getFile(key);
 
   ///Returns the file from memory if it has already been fetched
   FileInfo getFileFromMemory(String url) => _store.getFileFromMemory(url);
@@ -209,10 +216,12 @@ abstract class BaseCacheManager {
     String eTag,
     Duration maxAge = const Duration(days: 30),
     String fileExtension = 'file',
+    String key,
   }) async {
-    var cacheObject = await _store.retrieveCacheData(url);
-    cacheObject ??=
-        CacheObject(url, relativePath: '${Uuid().v1()}.$fileExtension');
+    key ??= url;
+    var cacheObject = await _store.retrieveCacheData(key);
+    cacheObject ??= CacheObject(key,
+        relativePath: '${Uuid().v1()}.$fileExtension', url: url);
     cacheObject.validTill = DateTime.now().add(maxAge);
     cacheObject.eTag = eTag;
 

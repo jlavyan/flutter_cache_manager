@@ -192,7 +192,7 @@ void main() {
 
       final store = _createStore(fileDir);
       when(store.retrieveCacheData(imageUrl)).thenAnswer(
-          (_) => Future.value(CacheObject(imageUrl, relativePath: imageName)));
+          (_) => Future.value(CacheObject(imageUrl, relativePath: imageName, url: imageUrl)));
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))

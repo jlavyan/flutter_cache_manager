@@ -12,18 +12,23 @@ class CacheObjectProvider implements CacheInfoRepository {
 
   @override
   Future open() async {
-    db = await openDatabase(path, version: 1,
+    db = await openDatabase(path, version: 2,
         onCreate: (Database db, int version) async {
       await db.execute('''
-      create table $_tableCacheObject ( 
-        ${CacheObject.columnId} integer primary key, 
-        ${CacheObject.columnUrl} text, 
+      create table $_tableCacheObject (
+        ${CacheObject.columnId} integer primary key,
+        ${CacheObject.columnUrl} text,
         ${CacheObject.columnPath} text,
         ${CacheObject.columnETag} text,
         ${CacheObject.columnValidTill} integer,
-        ${CacheObject.columnTouched} integer
+        ${CacheObject.columnTouched} integer,
+        ${CacheObject.columnKey} text
         )
       ''');
+    }, onUpgrade: (Database db, int oldVersion, int newVersion) async {
+      if (oldVersion == 1 && newVersion == 2) {
+        await db.execute('ALTER TABLE $_tableCacheObject ADD ${CacheObject.columnKey} text');
+      }
     });
   }
 
@@ -43,9 +48,9 @@ class CacheObjectProvider implements CacheInfoRepository {
   }
 
   @override
-  Future<CacheObject> get(String url) async {
+  Future<CacheObject> get(String key) async {
     List<Map> maps = await db.query(_tableCacheObject,
-        columns: null, where: '${CacheObject.columnUrl} = ?', whereArgs: [url]);
+        columns: null, where: '${CacheObject.columnKey} = ?', whereArgs: [key]);
     if (maps.isNotEmpty) {
       return CacheObject.fromMap(maps.first.cast<String, dynamic>());
     }

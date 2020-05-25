@@ -29,10 +29,14 @@ class WebHelper {
 
   ///Download the file from the url
   Stream<FileResponse> downloadFile(String url,
-      {Map<String, String> authHeaders, bool ignoreMemCache = false}) {
-    if (!_memCache.containsKey(url) || ignoreMemCache) {
+      {Map<String, String> authHeaders,
+      bool ignoreMemCache = false,
+      String key}) {
+    key ??= url;
+
+    if (!_memCache.containsKey(key) || ignoreMemCache) {
       var subject = BehaviorSubject<FileResponse>();
-      _memCache[url] = subject;
+      _memCache[key] = subject;
 
       unawaited(() async {
         try {
@@ -43,18 +47,18 @@ class WebHelper {
           subject.addError(e, stackTrace);
         } finally {
           await subject.close();
-          _memCache.remove(url);
+          _memCache.remove(key);
         }
       }());
     }
-    return _memCache[url].stream;
+    return _memCache[key].stream;
   }
 
   ///Download the file from the url
   Stream<FileResponse> _updateFile(String url,
-      {Map<String, String> authHeaders}) async* {
-    var cacheObject = await _store.retrieveCacheData(url);
-    cacheObject ??= CacheObject(url);
+      {Map<String, String> authHeaders, String key}) async* {
+    var cacheObject = await _store.retrieveCacheData(key);
+    cacheObject ??= CacheObject(key, url: url);
     final response = await _download(cacheObject, authHeaders);
     yield* _manageResponse(cacheObject, response);
 
