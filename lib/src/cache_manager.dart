@@ -123,10 +123,15 @@ abstract class BaseCacheManager {
   /// Get the file from the cache and/or online, depending on availability and age.
   /// Downloaded form [url], [headers] can be used for example for authentication.
   /// The files are returned as stream. First the cached file if available, when the
-  /// cached file is too old the newly downloaded file is returned afterwards
+  /// cached file is too old the newly downloaded file is returned afterwards.
+  /// Cache key is `key` if it's not provided `key` will be `url`
+
   @Deprecated('Prefer to use the new getFileStream method')
-  Stream<FileInfo> getFile(String url, {Map<String, String> headers}) {
-    return getFileStream(url, withProgress: false).map((r) => r as FileInfo);
+  Stream<FileInfo> getFile(String url,
+      {Map<String, String> headers, String key}) {
+    key ??= url;
+    return getFileStream(url, withProgress: false, key: key)
+        .map((r) => r as FileInfo);
   }
 
   /// Get the file from the cache and/or online, depending on availability and age.
@@ -155,7 +160,7 @@ abstract class BaseCacheManager {
       Map<String, String> headers, bool withProgress, String key) async {
     FileInfo cacheFile;
     try {
-      cacheFile = await getFileFromCache(url);
+      cacheFile = await getFileFromCache(key);
       if (cacheFile != null) {
         streamController.add(cacheFile);
         withProgress = false;

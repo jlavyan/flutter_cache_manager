@@ -33,14 +33,14 @@ class WebHelper {
       bool ignoreMemCache = false,
       String key}) {
     key ??= url;
-
+  print(key);
     if (!_memCache.containsKey(key) || ignoreMemCache) {
       var subject = BehaviorSubject<FileResponse>();
       _memCache[key] = subject;
 
       unawaited(() async {
         try {
-          await for (var result in _updateFile(url, authHeaders: authHeaders)) {
+          await for (var result in _updateFile(url, authHeaders: authHeaders, key: key)) {
             subject.add(result);
           }
         } catch (e, stackTrace) {
