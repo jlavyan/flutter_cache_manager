@@ -9,6 +9,7 @@ void main() {
   const columnETag = 'eTag';
   const columnValidTill = 'validTill';
   const columnTouched = 'touched';
+  const columnKey = 'key';
 
   const validMillis = 1585301160000;
   final validDate = DateTime.utc(2020, 03, 27, 09, 26).toLocal();
@@ -22,7 +23,8 @@ void main() {
         columnPath: 'test.png',
         columnETag: 'test1',
         columnValidTill: validMillis,
-        columnTouched: now.millisecondsSinceEpoch
+        columnTouched: now.millisecondsSinceEpoch,
+        columnKey: 'baseflow.com/test.png'
       };
       var object = CacheObject.fromMap(map);
       expect(object.id, 3);
@@ -40,6 +42,7 @@ void main() {
           validTill: validDate,
           eTag: 'test1',
           id: 3,
+          url: 'baseflow.com/test.png'
         );
 
         var map = object.toMap();
@@ -49,6 +52,7 @@ void main() {
         expect(map[columnETag], 'test1');
         expect(map[columnValidTill], validMillis);
         expect(map[columnTouched], now.millisecondsSinceEpoch);
+        expect(map[columnKey], 'baseflow.com/test.png');
       });
     });
   });
