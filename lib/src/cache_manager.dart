@@ -113,11 +113,11 @@ abstract class BaseCacheManager {
     final cacheFile = await getFileFromCache(key);
     if (cacheFile != null) {
       if (cacheFile.validTill.isBefore(DateTime.now())) {
-        unawaited(downloadFile(url, authHeaders: headers));
+        unawaited(downloadFile(url, authHeaders: headers, key: key));
       }
       return cacheFile.file;
     }
-    return (await downloadFile(url, authHeaders: headers)).file;
+    return (await downloadFile(url, authHeaders: headers, key: key)).file;
   }
 
   /// Get the file from the cache and/or online, depending on availability and age.
@@ -196,9 +196,9 @@ abstract class BaseCacheManager {
 
   ///Download the file and add to cache
   Future<FileInfo> downloadFile(String url,
-      {Map<String, String> authHeaders, bool force = false}) async {
+      {Map<String, String> authHeaders, bool force = false, String key}) async {
     var fileResponse = await _webHelper
-        .downloadFile(url, authHeaders: authHeaders, ignoreMemCache: force)
+        .downloadFile(url, authHeaders: authHeaders, ignoreMemCache: force, key: key)
         .firstWhere((r) => r is FileInfo);
     return fileResponse as FileInfo;
   }
